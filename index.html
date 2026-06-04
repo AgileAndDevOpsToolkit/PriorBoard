@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PriorBoard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600;9..144,700&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     PriorBoard — Style épuré, éditorial, ergonomique
+     ============================================================ */
+  :root {
+    --bg: #f7f5f0;
+    --bg-elevated: #ffffff;
+    --ink: #1a1814;
+    --ink-soft: #5a564e;
+    --ink-faint: #9a948a;
+    --line: #e6e1d7;
+    --line-strong: #d4cec0;
+    --accent: #c8553d;
+    --accent-soft: #f3e4df;
+    --success: #5a7a4a;
+    --warning: #d4a017;
+    --radius: 4px;
+    --radius-lg: 8px;
+    --shadow-sm: 0 1px 2px rgba(26, 24, 20, 0.04);
+    --shadow-md: 0 4px 16px rgba(26, 24, 20, 0.06);
+    --shadow-lg: 0 12px 40px rgba(26, 24, 20, 0.08);
+    --font-serif: 'Fraunces', Georgia, serif;
+    --font-sans: 'Inter Tight', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --t-fast: 160ms cubic-bezier(0.4, 0, 0.2, 1);
+    --t-med: 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    --t-slow: 480ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(200, 85, 61, 0.04) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(90, 122, 74, 0.04) 0%, transparent 40%);
+  }
+
+  /* ============================================================
+     HEADER
+     ============================================================ */
+  .header {
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(8px);
+    background-color: rgba(247, 245, 240, 0.85);
+  }
+  .header-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+  .brand {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 26px;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .brand-mark {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    transform: translateY(-1px);
+  }
+  .brand em {
+    font-style: italic;
+    font-weight: 400;
+  }
+  nav {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-elevated);
+    padding: 4px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line);
+  }
+  .nav-btn {
+    border: none;
+    background: transparent;
+    padding: 8px 18px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all var(--t-fast);
+    letter-spacing: -0.005em;
+  }
+  .nav-btn:hover { color: var(--ink); }
+  .nav-btn.active {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .icon-btn {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-lg);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--ink-soft);
+    transition: all var(--t-fast);
+  }
+  .icon-btn:hover {
+    color: var(--ink);
+    border-color: var(--line-strong);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+  .icon-btn svg { width: 18px; height: 18px; }
+
+  /* ============================================================
+     MAIN
+     ============================================================ */
+  main {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+  }
+
+  .screen { display: none; animation: fadeIn var(--t-med); }
+  .screen.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ============================================================
+     ZONE D'AJOUT (escamotable)
+     ============================================================ */
+  .add-zone {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    margin-bottom: 32px;
+    overflow: hidden;
+    transition: box-shadow var(--t-med);
+  }
+  .add-zone:hover { box-shadow: var(--shadow-sm); }
+
+  .add-header {
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+  }
+  .add-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .add-title {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 17px;
+    letter-spacing: -0.01em;
+  }
+  .add-hint {
+    font-size: 13px;
+    color: var(--ink-faint);
+    font-weight: 400;
+  }
+  .chevron {
+    transition: transform var(--t-med);
+    color: var(--ink-soft);
+  }
+  .add-zone.open .chevron { transform: rotate(180deg); }
+
+  .add-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height var(--t-slow), padding var(--t-slow);
+    padding: 0 22px;
+  }
+  .add-zone.open .add-body {
+    max-height: 600px;
+    padding: 8px 22px 22px;
+  }
+
+  .add-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 16px;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    padding: 10px 0;
+    margin-right: 24px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink-faint);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all var(--t-fast);
+  }
+  .tab-btn:hover { color: var(--ink-soft); }
+  .tab-btn.active {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  textarea.items-input {
+    width: 100%;
+    min-height: 140px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--ink);
+    background: var(--bg);
+    resize: vertical;
+    transition: border-color var(--t-fast), background var(--t-fast);
+  }
+  textarea.items-input:focus {
+    outline: none;
+    border-color: var(--ink-soft);
+    background: var(--bg-elevated);
+  }
+  textarea.items-input::placeholder { color: var(--ink-faint); }
+
+  .file-drop {
+    border: 1.5px dashed var(--line-strong);
+    border-radius: var(--radius);
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--t-fast);
+    background: var(--bg);
+  }
+  .file-drop:hover, .file-drop.dragover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .file-drop svg {
+    color: var(--ink-faint);
+    margin-bottom: 8px;
+  }
+  .file-drop-text {
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .file-drop-text strong { color: var(--ink); font-weight: 600; }
+  .file-drop-hint {
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-top: 4px;
+  }
+
+  .add-actions {
+    margin-top: 14px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .add-status {
+    font-size: 13px;
+    color: var(--ink-faint);
+  }
+
+  /* ============================================================
+     BOUTONS
+     ============================================================ */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all var(--t-fast);
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--ink);
+    color: var(--bg);
+  }
+  .btn-primary:hover {
+    background: #2a2620;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-soft);
+    border-color: var(--line);
+  }
+  .btn-ghost:hover {
+    color: var(--ink);
+    border-color: var(--line-strong);
+    background: var(--bg-elevated);
+  }
+  .btn-danger {
+    background: transparent;
+    color: var(--accent);
+    border-color: transparent;
+  }
+  .btn-danger:hover {
+    background: var(--accent-soft);
+  }
+
+  /* ============================================================
+     LISTE D'ITEMS
+     ============================================================ */
+  .list-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 0 4px;
+  }
+  .list-title {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 36px;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+  }
+  .list-title em {
+    font-style: italic;
+    color: var(--ink-soft);
+  }
+  .list-stats {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .items-list {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .item-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 80px 90px 40px;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--line);
+    transition: background var(--t-fast);
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-row:hover { background: var(--bg); }
+
+  .item-rank {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    font-size: 22px;
+    color: var(--ink-faint);
+    letter-spacing: -0.02em;
+  }
+  .item-row:nth-child(1) .item-rank,
+  .item-row.rank-1 .item-rank {
+    color: var(--accent);
+  }
+  .item-name {
+    font-size: 15.5px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    overflow-wrap: break-word;
+    min-width: 0;
+  }
+  .item-elo {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    text-align: right;
+  }
+  .item-battles {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    text-align: right;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .item-delete {
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--t-fast);
+    opacity: 0;
+  }
+  .item-row:hover .item-delete { opacity: 1; }
+  .item-delete:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .empty-state {
+    padding: 80px 30px;
+    text-align: center;
+    background: var(--bg-elevated);
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--radius-lg);
+  }
+  .empty-state-title {
+    font-family: var(--font-serif);
+    font-size: 24px;
+    font-weight: 400;
+    margin-bottom: 8px;
+    color: var(--ink);
+    letter-spacing: -0.02em;
+  }
+  .empty-state-title em { font-style: italic; }
+  .empty-state-text {
+    color: var(--ink-soft);
+    font-size: 14.5px;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+
+  /* ============================================================
+     BATTLE SCREEN
+     ============================================================ */
+  .battle-header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .battle-title {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 44px;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    margin-bottom: 12px;
+  }
+  .battle-title em { font-style: italic; color: var(--accent); }
+  .battle-subtitle {
+    color: var(--ink-soft);
+    font-size: 15px;
+    max-width: 440px;
+    margin: 0 auto;
+  }
+
+  .battle-arena {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 24px;
+    align-items: stretch;
+    min-height: 280px;
+  }
+
+  .battle-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 36px 30px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all var(--t-med);
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+  .battle-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(200, 85, 61, 0.03) 100%);
+    opacity: 0;
+    transition: opacity var(--t-med);
+  }
+  .battle-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+  }
+  .battle-card:hover::before { opacity: 1; }
+  .battle-card:active { transform: translateY(-1px); }
+
+  .battle-card.choosing {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .battle-card.fading {
+    opacity: 0;
+    transform: scale(0.96);
+    pointer-events: none;
+  }
+
+  .battle-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 24px;
+    position: relative;
+  }
+  .battle-name {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    font-size: 28px;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    overflow-wrap: break-word;
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+  }
+  .battle-meta {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    margin-top: 24px;
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+  }
+  .battle-meta strong {
+    color: var(--ink-soft);
+    font-weight: 500;
+  }
+
+  .battle-vs {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: 26px;
+    color: var(--ink-faint);
+    font-weight: 300;
+    padding: 0 4px;
+  }
+
+  .battle-controls {
+    margin-top: 32px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    align-items: center;
+  }
+  .battle-info {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .battle-info strong { color: var(--ink); font-weight: 500; }
+
+  /* ============================================================
+     TOAST
+     ============================================================ */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--ink);
+    color: var(--bg);
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    transition: transform var(--t-med);
+    z-index: 100;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+  }
+  .toast.success { background: var(--success); }
+  .toast.error { background: var(--accent); }
+
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+  @media (max-width: 720px) {
+    .header-inner { padding: 16px 20px; flex-wrap: wrap; }
+    .brand { font-size: 22px; }
+    main { padding: 24px 20px 60px; }
+    .list-title, .battle-title { font-size: 28px; }
+    .battle-name { font-size: 22px; }
+    .battle-arena {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr auto 1fr;
+    }
+    .battle-vs { padding: 12px 0; }
+    .item-row {
+      grid-template-columns: 40px 1fr 70px;
+      gap: 12px;
+      padding: 14px 16px;
+    }
+    .item-battles { display: none; }
+    .item-delete { opacity: 1; grid-row: 1; grid-column: 3; display: none; }
+    .add-header, .add-zone.open .add-body { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <span>Prior<em>Board</em></span>
+    </div>
+    <nav>
+      <button class="nav-btn active" data-screen="list">Classement</button>
+      <button class="nav-btn" data-screen="battle">Battle</button>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-btn" id="btn-download" title="Télécharger les données (JSON)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+      </button>
+      <button class="icon-btn" id="btn-import" title="Importer un fichier JSON">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </button>
+      <input type="file" id="import-file" accept=".json" hidden>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- ============= ÉCRAN LISTE ============= -->
+  <section class="screen active" id="screen-list">
+
+    <div class="add-zone" id="add-zone">
+      <div class="add-header" id="add-toggle">
+        <div class="add-header-left">
+          <span class="add-title">Ajouter des items</span>
+          <span class="add-hint" id="add-hint">— cliquer pour ouvrir</span>
+        </div>
+        <svg class="chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="add-body">
+        <div class="add-tabs">
+          <button class="tab-btn active" data-tab="text">Saisie texte</button>
+          <button class="tab-btn" data-tab="file">Fichier</button>
+        </div>
+
+        <div class="tab-content active" data-tab-content="text">
+          <textarea
+            class="items-input"
+            id="items-textarea"
+            placeholder="Un item par ligne&#10;Le Parrain&#10;Pulp Fiction&#10;Citizen Kane&#10;..."></textarea>
+        </div>
+
+        <div class="tab-content" data-tab-content="file">
+          <label class="file-drop" id="file-drop">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <div class="file-drop-text">
+              <strong>Cliquer pour choisir</strong> ou glisser-déposer un fichier
+            </div>
+            <div class="file-drop-hint">.txt, .csv (un item par ligne) ou .json</div>
+            <input type="file" id="file-input" accept=".txt,.csv,.json" hidden>
+          </label>
+        </div>
+
+        <div class="add-actions">
+          <span class="add-status" id="add-status"></span>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-ghost" id="btn-clear-input">Vider</button>
+            <button class="btn btn-primary" id="btn-add">Ajouter</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="list-header">
+      <h1 class="list-title">Le <em>classement</em></h1>
+      <div class="list-stats" id="list-stats">0 items · 0 battles</div>
+    </div>
+
+    <div id="items-container"></div>
+
+  </section>
+
+  <!-- ============= ÉCRAN BATTLE ============= -->
+  <section class="screen" id="screen-battle">
+    <div class="battle-header">
+      <h1 class="battle-title">A ou <em>B</em> ?</h1>
+      <p class="battle-subtitle">Choisis l'item que tu préfères. Le classement ELO s'ajuste à chaque duel.</p>
+    </div>
+
+    <div class="battle-arena" id="battle-arena">
+      <!-- rempli dynamiquement -->
+    </div>
+
+    <div class="battle-controls">
+      <span class="battle-info" id="battle-info">— Battles : <strong>0</strong></span>
+      <button class="btn btn-ghost" id="btn-skip">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/>
+        </svg>
+        Passer
+      </button>
+    </div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   PiorBoard — Logique applicative
+   ============================================================ */
+
+const STORAGE_KEY = 'piorboard_data_v1';
+const K_FACTOR = 32;       // facteur K du calcul ELO
+const INITIAL_ELO = 1000;  // score ELO de départ
+
+// ---- État ----
+let state = {
+  items: [],     // { id, name, elo, battles, wins, losses, createdAt }
+  history: [],   // { ts, winnerId, loserId, eloChange, snapshot:{wElo,lElo} }
+  version: 1
+};
+
+// ============================================================
+// Persistance localStorage
+// ============================================================
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.items)) {
+        state = { items: parsed.items, history: parsed.history || [], version: parsed.version || 1 };
+      }
+    }
+  } catch (e) {
+    console.warn('Impossible de charger les données :', e);
+  }
+}
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    showToast('Erreur de sauvegarde locale', 'error');
+  }
+}
+
+// ============================================================
+// Helpers
+// ============================================================
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// ============================================================
+// ALGORITHME ELO
+// ------------------------------------------------------------
+// Espérance de victoire de A face à B :
+//   Ea = 1 / (1 + 10^((Rb - Ra) / 400))
+// Mise à jour après match (S = 1 si victoire, 0 si défaite) :
+//   R' = R + K * (S - E)
+// K = 32 (valeur classique des fédérations d'échecs amateurs)
+// ============================================================
+function expectedScore(ra, rb) {
+  return 1 / (1 + Math.pow(10, (rb - ra) / 400));
+}
+function updateElo(winnerElo, loserElo) {
+  const eW = expectedScore(winnerElo, loserElo);
+  const eL = 1 - eW; // == expectedScore(loserElo, winnerElo)
+  const newWinner = winnerElo + K_FACTOR * (1 - eW);
+  const newLoser  = loserElo  + K_FACTOR * (0 - eL);
+  return {
+    winnerElo: Math.round(newWinner * 100) / 100,
+    loserElo:  Math.round(newLoser  * 100) / 100,
+    delta:     Math.round(K_FACTOR * (1 - eW) * 100) / 100
+  };
+}
+
+// ============================================================
+// Items
+// ============================================================
+function addItems(names) {
+  const existing = new Set(state.items.map(i => i.name.toLowerCase().trim()));
+  let added = 0, dupes = 0;
+  for (const raw of names) {
+    const name = raw.trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (existing.has(key)) { dupes++; continue; }
+    existing.add(key);
+    state.items.push({
+      id: uid(),
+      name,
+      elo: INITIAL_ELO,
+      battles: 0,
+      wins: 0,
+      losses: 0,
+      createdAt: Date.now()
+    });
+    added++;
+  }
+  saveState();
+  return { added, dupes };
+}
+
+function deleteItem(id) {
+  state.items = state.items.filter(i => i.id !== id);
+  // On ne purge pas l'historique pour préserver la traçabilité,
+  // mais on pourrait — au choix on garde.
+  saveState();
+}
+
+// ============================================================
+// Sélection des items pour la battle
+// ------------------------------------------------------------
+// Stratégie : pondération par l'inverse du nombre de battles.
+// Plus un item a peu de battles, plus son poids est élevé.
+// poids = 1 / (battles + 1) — garantit que tous ont un poids non nul.
+// Le second item est choisi parmi les autres avec la même règle.
+// ============================================================
+function weightedPick(items, exclude = null) {
+  const candidates = items.filter(i => !exclude || i.id !== exclude.id);
+  if (candidates.length === 0) return null;
+  const weights = candidates.map(i => 1 / (i.battles + 1));
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < candidates.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return candidates[i];
+  }
+  return candidates[candidates.length - 1];
+}
+function pickBattlePair() {
+  if (state.items.length < 2) return null;
+  const a = weightedPick(state.items);
+  const b = weightedPick(state.items, a);
+  // 50/50 sur la position gauche/droite pour ne pas biaiser
+  return Math.random() < 0.5 ? [a, b] : [b, a];
+}
+
+// ============================================================
+// Enregistrer un choix
+// ============================================================
+function recordChoice(winnerId, loserId) {
+  const winner = state.items.find(i => i.id === winnerId);
+  const loser  = state.items.find(i => i.id === loserId);
+  if (!winner || !loser) return;
+
+  const oldW = winner.elo, oldL = loser.elo;
+  const { winnerElo, loserElo, delta } = updateElo(oldW, oldL);
+
+  winner.elo = winnerElo;
+  loser.elo  = loserElo;
+  winner.battles++; loser.battles++;
+  winner.wins++;    loser.losses++;
+
+  state.history.push({
+    ts: Date.now(),
+    winnerId, loserId,
+    eloChange: delta,
+    snapshot: { wEloBefore: oldW, lEloBefore: oldL, wEloAfter: winnerElo, lEloAfter: loserElo }
+  });
+  saveState();
+}
+
+// ============================================================
+// Téléchargement JSON
+// ============================================================
+function downloadJson() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `piorboard-${date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Données téléchargées', 'success');
+}
+
+function importJson(data) {
+  try {
+    const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+    if (!parsed || !Array.isArray(parsed.items)) throw new Error('Format invalide');
+    state = {
+      items: parsed.items,
+      history: Array.isArray(parsed.history) ? parsed.history : [],
+      version: parsed.version || 1
+    };
+    saveState();
+    renderAll();
+    showToast(`Import : ${state.items.length} items chargés`, 'success');
+  } catch (e) {
+    showToast('Fichier JSON invalide', 'error');
+  }
+}
+
+// ============================================================
+// RENDU
+// ============================================================
+function renderList() {
+  const container = document.getElementById('items-container');
+  const stats = document.getElementById('list-stats');
+  const totalBattles = state.history.length;
+  stats.textContent = `${state.items.length} item${state.items.length > 1 ? 's' : ''} · ${totalBattles} battle${totalBattles > 1 ? 's' : ''}`;
+
+  if (state.items.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-title">Aucun item pour <em>l'instant</em></div>
+        <div class="empty-state-text">Ouvre la zone d'ajout en haut pour ajouter tes premiers items à classer. Tape-les un par ligne ou importe un fichier.</div>
+      </div>`;
+    return;
+  }
+
+  const sorted = [...state.items].sort((a, b) => b.elo - a.elo);
+  container.innerHTML = `
+    <div class="items-list">
+      ${sorted.map((it, idx) => `
+        <div class="item-row ${idx === 0 ? 'rank-1' : ''}">
+          <div class="item-rank">${String(idx + 1).padStart(2, '0')}</div>
+          <div class="item-name">${escapeHtml(it.name)}</div>
+          <div class="item-elo">${Math.round(it.elo)}</div>
+          <div class="item-battles">${it.battles} battle${it.battles > 1 ? 's' : ''}</div>
+          <button class="item-delete" data-id="${it.id}" title="Supprimer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  container.querySelectorAll('.item-delete').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const item = state.items.find(i => i.id === id);
+      if (!item) return;
+      if (confirm(`Supprimer « ${item.name} » ?`)) {
+        deleteItem(id);
+        renderList();
+      }
+    });
+  });
+}
+
+let currentPair = null;
+
+function renderBattle() {
+  const arena = document.getElementById('battle-arena');
+  const info = document.getElementById('battle-info');
+  info.innerHTML = `Battles : <strong>${state.history.length}</strong>`;
+
+  if (state.items.length < 2) {
+    arena.innerHTML = `
+      <div class="empty-state" style="grid-column: 1 / -1;">
+        <div class="empty-state-title">Pas assez <em>d'items</em></div>
+        <div class="empty-state-text">Ajoute au moins 2 items dans l'onglet Classement pour démarrer une battle.</div>
+      </div>`;
+    return;
+  }
+
+  currentPair = pickBattlePair();
+  if (!currentPair) return;
+  const [a, b] = currentPair;
+
+  arena.innerHTML = `
+    <button class="battle-card" data-id="${a.id}">
+      <div class="battle-label">Option A</div>
+      <div class="battle-name">${escapeHtml(a.name)}</div>
+      <div class="battle-meta">
+        <span>ELO <strong>${Math.round(a.elo)}</strong></span>
+        <span><strong>${a.battles}</strong> battle${a.battles > 1 ? 's' : ''}</span>
+      </div>
+    </button>
+    <div class="battle-vs">vs</div>
+    <button class="battle-card" data-id="${b.id}">
+      <div class="battle-label">Option B</div>
+      <div class="battle-name">${escapeHtml(b.name)}</div>
+      <div class="battle-meta">
+        <span>ELO <strong>${Math.round(b.elo)}</strong></span>
+        <span><strong>${b.battles}</strong> battle${b.battles > 1 ? 's' : ''}</span>
+      </div>
+    </button>
+  `;
+
+  arena.querySelectorAll('.battle-card').forEach(card => {
+    card.addEventListener('click', () => handleChoice(card.dataset.id));
+  });
+}
+
+function handleChoice(winnerId) {
+  if (!currentPair) return;
+  const [a, b] = currentPair;
+  const loserId = winnerId === a.id ? b.id : a.id;
+
+  // Feedback visuel
+  const arena = document.getElementById('battle-arena');
+  arena.querySelectorAll('.battle-card').forEach(c => {
+    if (c.dataset.id === winnerId) c.classList.add('choosing');
+    else c.classList.add('fading');
+  });
+
+  recordChoice(winnerId, loserId);
+
+  setTimeout(() => {
+    renderBattle();
+  }, 320);
+}
+
+function renderAll() {
+  renderList();
+  if (document.getElementById('screen-battle').classList.contains('active')) {
+    renderBattle();
+  }
+}
+
+// ============================================================
+// Toast
+// ============================================================
+let toastTimer = null;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+// ============================================================
+// Wiring UI
+// ============================================================
+function setupNav() {
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const screenId = btn.dataset.screen;
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.screen').forEach(s => {
+        s.classList.toggle('active', s.id === `screen-${screenId}`);
+      });
+      if (screenId === 'battle') renderBattle();
+      if (screenId === 'list')   renderList();
+    });
+  });
+}
+
+function setupAddZone() {
+  const zone = document.getElementById('add-zone');
+  const toggle = document.getElementById('add-toggle');
+  const hint = document.getElementById('add-hint');
+
+  toggle.addEventListener('click', () => {
+    zone.classList.toggle('open');
+    hint.textContent = zone.classList.contains('open')
+      ? '— texte ou fichier'
+      : '— cliquer pour ouvrir';
+  });
+
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.tab-content').forEach(c => {
+        c.classList.toggle('active', c.dataset.tabContent === tab);
+      });
+    });
+  });
+
+  // File drop
+  const drop = document.getElementById('file-drop');
+  const fileInput = document.getElementById('file-input');
+  drop.addEventListener('click', () => fileInput.click());
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+  drop.addEventListener('drop', e => {
+    e.preventDefault();
+    drop.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+  fileInput.addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (f) handleFile(f);
+    fileInput.value = '';
+  });
+
+  document.getElementById('btn-clear-input').addEventListener('click', () => {
+    document.getElementById('items-textarea').value = '';
+    document.getElementById('add-status').textContent = '';
+  });
+
+  document.getElementById('btn-add').addEventListener('click', () => {
+    const text = document.getElementById('items-textarea').value;
+    if (!text.trim()) {
+      showToast('La zone de texte est vide', 'error');
+      return;
+    }
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    const { added, dupes } = addItems(lines);
+    document.getElementById('items-textarea').value = '';
+    document.getElementById('add-status').textContent =
+      `${added} ajouté${added > 1 ? 's' : ''}${dupes ? ` · ${dupes} doublon${dupes > 1 ? 's' : ''} ignoré${dupes > 1 ? 's' : ''}` : ''}`;
+    showToast(`${added} item${added > 1 ? 's' : ''} ajouté${added > 1 ? 's' : ''}`, 'success');
+    renderList();
+  });
+}
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const content = e.target.result;
+    if (file.name.toLowerCase().endsWith('.json')) {
+      importJson(content);
+    } else {
+      // .txt / .csv → 1 ligne = 1 item (on prend la 1ère colonne pour CSV)
+      const lines = content.split(/\r?\n/)
+        .map(l => l.split(/[,;\t]/)[0].replace(/^"|"$/g, '').trim())
+        .filter(l => l);
+      const { added, dupes } = addItems(lines);
+      document.getElementById('add-status').textContent =
+        `${added} ajouté${added > 1 ? 's' : ''}${dupes ? ` · ${dupes} doublon${dupes > 1 ? 's' : ''} ignoré${dupes > 1 ? 's' : ''}` : ''}`;
+      showToast(`${added} item${added > 1 ? 's' : ''} ajouté${added > 1 ? 's' : ''} depuis ${file.name}`, 'success');
+      renderList();
+    }
+  };
+  reader.readAsText(file);
+}
+
+function setupHeaderActions() {
+  document.getElementById('btn-download').addEventListener('click', downloadJson);
+  const importBtn = document.getElementById('btn-import');
+  const importFile = document.getElementById('import-file');
+  importBtn.addEventListener('click', () => importFile.click());
+  importFile.addEventListener('change', e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = ev => importJson(ev.target.result);
+    reader.readAsText(f);
+    importFile.value = '';
+  });
+
+  document.getElementById('btn-skip').addEventListener('click', () => renderBattle());
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  loadState();
+  setupNav();
+  setupAddZone();
+  setupHeaderActions();
+  renderList();
+
+  // Auto-ouvre la zone d'ajout si aucun item
+  if (state.items.length === 0) {
+    document.getElementById('add-zone').classList.add('open');
+    document.getElementById('add-hint').textContent = '— texte ou fichier';
+  }
+});
+</script>
+
+</body>
+</html>
