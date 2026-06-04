@@ -480,13 +480,13 @@
     color: var(--ink-faint);
   }
   .item-check.checked {
-    background: var(--success);
-    border-color: var(--success);
-    color: var(--bg-elevated);
+    background: #d4e3c4;
+    border-color: #b8cba8;
+    color: #5a7a4a;
   }
   .item-check.checked:hover {
-    background: #4a6a3a;
-    border-color: #4a6a3a;
+    background: #c5d4b8;
+    border-color: #a8c194;
   }
   .item-check svg { width: 14px; height: 14px; display: block; }
 
@@ -497,15 +497,13 @@
   .item-row.completed:hover {
     background: rgba(90, 122, 74, 0.10);
   }
-  .item-row.completed .item-name {
-    text-decoration: line-through;
-    text-decoration-color: var(--ink-faint);
-    text-decoration-thickness: 1.5px;
-    color: var(--ink-faint);
-  }
+  .item-row.completed .item-name,
   .item-row.completed .item-rank,
   .item-row.completed .item-elo,
   .item-row.completed .item-battles {
+    text-decoration: line-through;
+    text-decoration-color: var(--ink-faint);
+    text-decoration-thickness: 1.5px;
     color: var(--ink-faint);
   }
   .item-row.completed.rank-1 .item-rank { color: var(--ink-faint); }
