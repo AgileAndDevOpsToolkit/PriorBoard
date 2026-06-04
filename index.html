@@ -394,9 +394,9 @@
 
   .item-row {
     display: grid;
-    grid-template-columns: 60px 1fr 80px 90px 40px;
+    grid-template-columns: 32px 44px 1fr 80px 90px 40px;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
     padding: 16px 22px;
     border-bottom: 1px solid var(--line);
     transition: background var(--t-fast);
@@ -457,6 +457,58 @@
     background: var(--accent-soft);
     color: var(--accent);
   }
+
+  /* Case à cocher (toggle terminé) */
+  .item-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 1.5px solid var(--line-strong);
+    background: var(--bg-elevated);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--t-fast);
+    color: transparent;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .item-check:hover {
+    border-color: var(--ink-soft);
+    background: var(--bg);
+    color: var(--ink-faint);
+  }
+  .item-check.checked {
+    background: var(--success);
+    border-color: var(--success);
+    color: var(--bg-elevated);
+  }
+  .item-check.checked:hover {
+    background: #4a6a3a;
+    border-color: #4a6a3a;
+  }
+  .item-check svg { width: 14px; height: 14px; display: block; }
+
+  /* État terminé */
+  .item-row.completed {
+    background: rgba(90, 122, 74, 0.06);
+  }
+  .item-row.completed:hover {
+    background: rgba(90, 122, 74, 0.10);
+  }
+  .item-row.completed .item-name {
+    text-decoration: line-through;
+    text-decoration-color: var(--ink-faint);
+    text-decoration-thickness: 1.5px;
+    color: var(--ink-faint);
+  }
+  .item-row.completed .item-rank,
+  .item-row.completed .item-elo,
+  .item-row.completed .item-battles {
+    color: var(--ink-faint);
+  }
+  .item-row.completed.rank-1 .item-rank { color: var(--ink-faint); }
 
   .empty-state {
     padding: 80px 30px;
@@ -659,12 +711,13 @@
     }
     .battle-vs { padding: 12px 0; }
     .item-row {
-      grid-template-columns: 40px 1fr 70px;
-      gap: 12px;
-      padding: 14px 16px;
+      grid-template-columns: 26px 36px 1fr 60px 30px;
+      gap: 10px;
+      padding: 14px 14px;
     }
     .item-battles { display: none; }
-    .item-delete { opacity: 1; grid-row: 1; grid-column: 3; display: none; }
+    .item-delete { opacity: 1; }
+    .item-check { width: 20px; height: 20px; }
     .add-header, .add-zone.open .add-body { padding-left: 16px; padding-right: 16px; }
   }
 </style>
@@ -788,10 +841,10 @@
 
 <script>
 /* ============================================================
-   PiorBoard — Logique applicative
+   PriorBoard — Logique applicative
    ============================================================ */
 
-const STORAGE_KEY = 'piorboard_data_v1';
+const STORAGE_KEY = 'priorboard_data_v1';
 const K_FACTOR = 32;       // facteur K du calcul ELO
 const INITIAL_ELO = 1000;  // score ELO de départ
 
@@ -812,6 +865,10 @@ function loadState() {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.items)) {
         state = { items: parsed.items, history: parsed.history || [], version: parsed.version || 1 };
+        // Rétrocompat : ajouter le champ completed aux anciens items
+        state.items.forEach(it => {
+          if (typeof it.completed !== 'boolean') it.completed = false;
+        });
       }
     }
   } catch (e) {
@@ -881,6 +938,7 @@ function addItems(names) {
       battles: 0,
       wins: 0,
       losses: 0,
+      completed: false,
       createdAt: Date.now()
     });
     added++;
@@ -893,6 +951,15 @@ function deleteItem(id) {
   state.items = state.items.filter(i => i.id !== id);
   // On ne purge pas l'historique pour préserver la traçabilité,
   // mais on pourrait — au choix on garde.
+  saveState();
+}
+
+function toggleComplete(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  item.completed = !item.completed;
+  if (item.completed) item.completedAt = Date.now();
+  else delete item.completedAt;
   saveState();
 }
 
@@ -917,9 +984,11 @@ function weightedPick(items, exclude = null) {
   return candidates[candidates.length - 1];
 }
 function pickBattlePair() {
-  if (state.items.length < 2) return null;
-  const a = weightedPick(state.items);
-  const b = weightedPick(state.items, a);
+  // Seuls les items actifs (non terminés) sont éligibles aux battles.
+  const active = state.items.filter(i => !i.completed);
+  if (active.length < 2) return null;
+  const a = weightedPick(active);
+  const b = weightedPick(active, a);
   // 50/50 sur la position gauche/droite pour ne pas biaiser
   return Math.random() < 0.5 ? [a, b] : [b, a];
 }
@@ -958,7 +1027,7 @@ function downloadJson() {
   const a = document.createElement('a');
   const date = new Date().toISOString().slice(0, 10);
   a.href = url;
-  a.download = `piorboard-${date}.json`;
+  a.download = `priorboard-${date}.json`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -990,7 +1059,13 @@ function renderList() {
   const container = document.getElementById('items-container');
   const stats = document.getElementById('list-stats');
   const totalBattles = state.history.length;
-  stats.textContent = `${state.items.length} item${state.items.length > 1 ? 's' : ''} · ${totalBattles} battle${totalBattles > 1 ? 's' : ''}`;
+  const completedCount = state.items.filter(i => i.completed).length;
+  const statsParts = [
+    `${state.items.length} item${state.items.length > 1 ? 's' : ''}`
+  ];
+  if (completedCount > 0) statsParts.push(`${completedCount} terminé${completedCount > 1 ? 's' : ''}`);
+  statsParts.push(`${totalBattles} battle${totalBattles > 1 ? 's' : ''}`);
+  stats.textContent = statsParts.join(' · ');
 
   if (state.items.length === 0) {
     container.innerHTML = `
@@ -1005,7 +1080,15 @@ function renderList() {
   container.innerHTML = `
     <div class="items-list">
       ${sorted.map((it, idx) => `
-        <div class="item-row ${idx === 0 ? 'rank-1' : ''}">
+        <div class="item-row ${idx === 0 && !it.completed ? 'rank-1' : ''} ${it.completed ? 'completed' : ''}">
+          <button class="item-check ${it.completed ? 'checked' : ''}" data-id="${it.id}"
+                  title="${it.completed ? 'Réactiver l\'item' : 'Marquer comme terminé'}"
+                  aria-label="${it.completed ? 'Réactiver' : 'Marquer comme terminé'}"
+                  aria-pressed="${it.completed}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </button>
           <div class="item-rank">${String(idx + 1).padStart(2, '0')}</div>
           <div class="item-name">${escapeHtml(it.name)}</div>
           <div class="item-elo">${Math.round(it.elo)}</div>
@@ -1019,6 +1102,13 @@ function renderList() {
       `).join('')}
     </div>
   `;
+
+  container.querySelectorAll('.item-check').forEach(btn => {
+    btn.addEventListener('click', () => {
+      toggleComplete(btn.dataset.id);
+      renderList();
+    });
+  });
 
   container.querySelectorAll('.item-delete').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1040,11 +1130,21 @@ function renderBattle() {
   const info = document.getElementById('battle-info');
   info.innerHTML = `Battles : <strong>${state.history.length}</strong>`;
 
-  if (state.items.length < 2) {
+  const activeCount = state.items.filter(i => !i.completed).length;
+  if (activeCount < 2) {
+    let title, text;
+    if (state.items.length < 2) {
+      title = `Pas assez <em>d'items</em>`;
+      text = `Ajoute au moins 2 items dans l'onglet Classement pour démarrer une battle.`;
+    } else {
+      const completed = state.items.length - activeCount;
+      title = `Tout est <em>terminé</em>`;
+      text = `Tu as ${state.items.length} items, dont ${completed} marqué${completed > 1 ? 's' : ''} comme terminé${completed > 1 ? 's' : ''}. Il faut au moins 2 items actifs pour faire une battle.`;
+    }
     arena.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1;">
-        <div class="empty-state-title">Pas assez <em>d'items</em></div>
-        <div class="empty-state-text">Ajoute au moins 2 items dans l'onglet Classement pour démarrer une battle.</div>
+        <div class="empty-state-title">${title}</div>
+        <div class="empty-state-text">${text}</div>
       </div>`;
     return;
   }
