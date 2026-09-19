@@ -396,6 +396,9 @@
     accent-color: #5a7a4a;
     cursor: pointer;
   }
+  .show-disabled-toggle input[type="checkbox"] {
+    accent-color: #b5701a;
+  }
 
   .items-list {
     background: var(--bg-elevated);
@@ -406,7 +409,7 @@
 
   .item-row {
     display: grid;
-    grid-template-columns: 32px 44px 1fr 80px 90px 40px;
+    grid-template-columns: 32px 44px 1fr 80px 90px 40px 40px;
     align-items: center;
     gap: 14px;
     padding: 16px 22px;
@@ -470,6 +473,34 @@
     color: var(--accent);
   }
 
+  /* Bouton "désactiver" (sens interdit) */
+  .item-disable {
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--t-fast);
+    opacity: 0;
+  }
+  .item-row:hover .item-disable { opacity: 1; }
+  .item-disable:hover {
+    background: #fbe3c4;
+    color: #b5701a;
+  }
+  .item-disable.active {
+    opacity: 1;
+    color: #b5701a;
+  }
+  .item-disable.active:hover {
+    background: #f7d6a3;
+  }
+
   /* Case à cocher (toggle terminé) */
   .item-check {
     width: 22px;
@@ -519,6 +550,21 @@
     color: var(--ink-faint);
   }
   .item-row.completed.rank-1 .item-rank { color: var(--ink-faint); }
+
+  /* État désactivé */
+  .item-row.disabled {
+    background: rgba(181, 112, 26, 0.06);
+  }
+  .item-row.disabled:hover {
+    background: rgba(181, 112, 26, 0.10);
+  }
+  .item-row.disabled .item-name,
+  .item-row.disabled .item-rank,
+  .item-row.disabled .item-elo,
+  .item-row.disabled .item-battles {
+    color: #b5701a;
+  }
+  .item-row.disabled.rank-1 .item-rank { color: #b5701a; }
 
   .empty-state {
     padding: 80px 30px;
@@ -721,12 +767,13 @@
     }
     .battle-vs { padding: 12px 0; }
     .item-row {
-      grid-template-columns: 26px 36px 1fr 60px 30px;
+      grid-template-columns: 26px 36px 1fr 60px 30px 30px;
       gap: 10px;
       padding: 14px 14px;
     }
     .item-battles { display: none; }
     .item-delete { opacity: 1; }
+    .item-disable { opacity: 1; }
     .item-check { width: 20px; height: 20px; }
     .add-header, .add-zone.open .add-body { padding-left: 16px; padding-right: 16px; }
   }
@@ -863,7 +910,8 @@ let state = {
   items: [],     // { id, name, elo, battles, wins, losses, createdAt }
   history: [],   // { ts, winnerId, loserId, eloChange, snapshot:{wElo,lElo} }
   version: 1,
-  showCompleted: true // affichage des items terminés dans la liste
+  showCompleted: true, // affichage des items terminés dans la liste
+  showDisabled: true   // affichage des items désactivés dans la liste
 };
 
 // ============================================================
@@ -879,11 +927,13 @@ function loadState() {
           items: parsed.items,
           history: parsed.history || [],
           version: parsed.version || 1,
-          showCompleted: typeof parsed.showCompleted === 'boolean' ? parsed.showCompleted : true
+          showCompleted: typeof parsed.showCompleted === 'boolean' ? parsed.showCompleted : true,
+          showDisabled: typeof parsed.showDisabled === 'boolean' ? parsed.showDisabled : true
         };
-        // Rétrocompat : ajouter le champ completed aux anciens items
+        // Rétrocompat : ajouter les champs completed/disabled aux anciens items
         state.items.forEach(it => {
           if (typeof it.completed !== 'boolean') it.completed = false;
+          if (typeof it.disabled !== 'boolean') it.disabled = false;
         });
       }
     }
@@ -955,6 +1005,7 @@ function addItems(names) {
       wins: 0,
       losses: 0,
       completed: false,
+      disabled: false,
       createdAt: Date.now()
     });
     added++;
@@ -979,6 +1030,15 @@ function toggleComplete(id) {
   saveState();
 }
 
+function toggleDisabled(id) {
+  const item = state.items.find(i => i.id === id);
+  if (!item) return;
+  item.disabled = !item.disabled;
+  if (item.disabled) item.disabledAt = Date.now();
+  else delete item.disabledAt;
+  saveState();
+}
+
 // ============================================================
 // Sélection des items pour la battle
 // ------------------------------------------------------------
@@ -1000,8 +1060,8 @@ function weightedPick(items, exclude = null) {
   return candidates[candidates.length - 1];
 }
 function pickBattlePair() {
-  // Seuls les items actifs (non terminés) sont éligibles aux battles.
-  const active = state.items.filter(i => !i.completed);
+  // Seuls les items actifs (non terminés, non désactivés) sont éligibles aux battles.
+  const active = state.items.filter(i => !i.completed && !i.disabled);
   if (active.length < 2) return null;
   const a = weightedPick(active);
   const b = weightedPick(active, a);
@@ -1059,7 +1119,8 @@ function importJson(data) {
       items: parsed.items,
       history: Array.isArray(parsed.history) ? parsed.history : [],
       version: parsed.version || 1,
-      showCompleted: typeof parsed.showCompleted === 'boolean' ? parsed.showCompleted : true
+      showCompleted: typeof parsed.showCompleted === 'boolean' ? parsed.showCompleted : true,
+      showDisabled: typeof parsed.showDisabled === 'boolean' ? parsed.showDisabled : true
     };
     saveState();
     renderAll();
@@ -1077,7 +1138,8 @@ function renderList() {
   const stats = document.getElementById('list-stats');
   const totalBattles = state.history.length;
   const completedCount = state.items.filter(i => i.completed).length;
-  const todoCount = state.items.length - completedCount;
+  const disabledCount = state.items.filter(i => i.disabled).length;
+  const todoCount = state.items.filter(i => !i.completed && !i.disabled).length;
   const statsParts = [
     `${state.items.length} item${state.items.length > 1 ? 's' : ''}`,
     `${todoCount} à faire`
@@ -1090,6 +1152,14 @@ function renderList() {
       `</label>`
     );
   }
+  if (disabledCount > 0) {
+    statsParts.push(
+      `<label class="show-completed-toggle show-disabled-toggle">` +
+        `<input type="checkbox" id="toggle-show-disabled" ${state.showDisabled ? 'checked' : ''}>` +
+        `${disabledCount} inactif${disabledCount > 1 ? 's' : ''}` +
+      `</label>`
+    );
+  }
   statsParts.push(`${totalBattles} battle${totalBattles > 1 ? 's' : ''}`);
   stats.innerHTML = statsParts.join(' · ');
 
@@ -1097,6 +1167,14 @@ function renderList() {
   if (toggleCompleted) {
     toggleCompleted.addEventListener('change', () => {
       state.showCompleted = toggleCompleted.checked;
+      saveState();
+      renderList();
+    });
+  }
+  const toggleDisplayDisabled = document.getElementById('toggle-show-disabled');
+  if (toggleDisplayDisabled) {
+    toggleDisplayDisabled.addEventListener('change', () => {
+      state.showDisabled = toggleDisplayDisabled.checked;
       saveState();
       renderList();
     });
@@ -1112,11 +1190,13 @@ function renderList() {
   }
 
   const sorted = [...state.items].sort((a, b) => b.elo - a.elo);
-  const visible = state.showCompleted ? sorted : sorted.filter(it => !it.completed);
+  const visible = sorted
+    .filter(it => state.showCompleted || !it.completed)
+    .filter(it => state.showDisabled || !it.disabled);
   container.innerHTML = `
     <div class="items-list">
       ${visible.map((it, idx) => `
-        <div class="item-row ${idx === 0 && !it.completed ? 'rank-1' : ''} ${it.completed ? 'completed' : ''}">
+        <div class="item-row ${idx === 0 && !it.completed && !it.disabled ? 'rank-1' : ''} ${it.completed ? 'completed' : ''} ${it.disabled ? 'disabled' : ''}">
           <button class="item-check ${it.completed ? 'checked' : ''}" data-id="${it.id}"
                   title="${it.completed ? 'Réactiver l\'item' : 'Marquer comme terminé'}"
                   aria-label="${it.completed ? 'Réactiver' : 'Marquer comme terminé'}"
@@ -1129,6 +1209,14 @@ function renderList() {
           <div class="item-name">${escapeHtml(it.name)}</div>
           <div class="item-elo">${Math.round(it.elo)}</div>
           <div class="item-battles">${it.battles} battle${it.battles > 1 ? 's' : ''}</div>
+          <button class="item-disable ${it.disabled ? 'active' : ''}" data-id="${it.id}"
+                  title="${it.disabled ? 'Réactiver l\'item' : 'Désactiver l\'item'}"
+                  aria-label="${it.disabled ? 'Réactiver' : 'Désactiver'}"
+                  aria-pressed="${it.disabled}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/><line x1="5.5" y1="5.5" x2="18.5" y2="18.5"/>
+            </svg>
+          </button>
           <button class="item-delete" data-id="${it.id}" title="Supprimer">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -1142,6 +1230,13 @@ function renderList() {
   container.querySelectorAll('.item-check').forEach(btn => {
     btn.addEventListener('click', () => {
       toggleComplete(btn.dataset.id);
+      renderList();
+    });
+  });
+
+  container.querySelectorAll('.item-disable').forEach(btn => {
+    btn.addEventListener('click', () => {
+      toggleDisabled(btn.dataset.id);
       renderList();
     });
   });
@@ -1166,16 +1261,16 @@ function renderBattle() {
   const info = document.getElementById('battle-info');
   info.innerHTML = `Battles : <strong>${state.history.length}</strong>`;
 
-  const activeCount = state.items.filter(i => !i.completed).length;
+  const activeCount = state.items.filter(i => !i.completed && !i.disabled).length;
   if (activeCount < 2) {
     let title, text;
     if (state.items.length < 2) {
       title = `Pas assez <em>d'items</em>`;
       text = `Ajoute au moins 2 items dans l'onglet Classement pour démarrer une battle.`;
     } else {
-      const completed = state.items.length - activeCount;
+      const inactive = state.items.length - activeCount;
       title = `Tout est <em>terminé</em>`;
-      text = `Tu as ${state.items.length} items, dont ${completed} marqué${completed > 1 ? 's' : ''} comme terminé${completed > 1 ? 's' : ''}. Il faut au moins 2 items actifs pour faire une battle.`;
+      text = `Tu as ${state.items.length} items, dont ${inactive} marqué${inactive > 1 ? 's' : ''} comme terminé${inactive > 1 ? 's' : ''} ou désactivé${inactive > 1 ? 's' : ''}. Il faut au moins 2 items actifs pour faire une battle.`;
     }
     arena.innerHTML = `
       <div class="empty-state" style="grid-column: 1 / -1;">
