@@ -384,6 +384,18 @@
     text-transform: uppercase;
     letter-spacing: 0.08em;
   }
+  .show-completed-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+  .show-completed-toggle input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
+    accent-color: #5a7a4a;
+    cursor: pointer;
+  }
 
   .items-list {
     background: var(--bg-elevated);
@@ -850,7 +862,8 @@ const INITIAL_ELO = 1000;  // score ELO de départ
 let state = {
   items: [],     // { id, name, elo, battles, wins, losses, createdAt }
   history: [],   // { ts, winnerId, loserId, eloChange, snapshot:{wElo,lElo} }
-  version: 1
+  version: 1,
+  showCompleted: true // affichage des items terminés dans la liste
 };
 
 // ============================================================
@@ -862,7 +875,12 @@ function loadState() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.items)) {
-        state = { items: parsed.items, history: parsed.history || [], version: parsed.version || 1 };
+        state = {
+          items: parsed.items,
+          history: parsed.history || [],
+          version: parsed.version || 1,
+          showCompleted: typeof parsed.showCompleted === 'boolean' ? parsed.showCompleted : true
+        };
         // Rétrocompat : ajouter le champ completed aux anciens items
         state.items.forEach(it => {
           if (typeof it.completed !== 'boolean') it.completed = false;
@@ -1040,7 +1058,8 @@ function importJson(data) {
     state = {
       items: parsed.items,
       history: Array.isArray(parsed.history) ? parsed.history : [],
-      version: parsed.version || 1
+      version: parsed.version || 1,
+      showCompleted: typeof parsed.showCompleted === 'boolean' ? parsed.showCompleted : true
     };
     saveState();
     renderAll();
@@ -1060,12 +1079,28 @@ function renderList() {
   const completedCount = state.items.filter(i => i.completed).length;
   const todoCount = state.items.length - completedCount;
   const statsParts = [
-    `${state.items.length} item${state.items.length > 1 ? 's' : ''}`
+    `${state.items.length} item${state.items.length > 1 ? 's' : ''}`,
+    `${todoCount} à faire`
   ];
-  statsParts.push(`${todoCount} à faire`);
-  if (completedCount > 0) statsParts.push(`${completedCount} terminé${completedCount > 1 ? 's' : ''}`);
+  if (completedCount > 0) {
+    statsParts.push(
+      `<label class="show-completed-toggle">` +
+        `<input type="checkbox" id="toggle-show-completed" ${state.showCompleted ? 'checked' : ''}>` +
+        `${completedCount} terminé${completedCount > 1 ? 's' : ''}` +
+      `</label>`
+    );
+  }
   statsParts.push(`${totalBattles} battle${totalBattles > 1 ? 's' : ''}`);
-  stats.textContent = statsParts.join(' · ');
+  stats.innerHTML = statsParts.join(' · ');
+
+  const toggleCompleted = document.getElementById('toggle-show-completed');
+  if (toggleCompleted) {
+    toggleCompleted.addEventListener('change', () => {
+      state.showCompleted = toggleCompleted.checked;
+      saveState();
+      renderList();
+    });
+  }
 
   if (state.items.length === 0) {
     container.innerHTML = `
@@ -1077,9 +1112,10 @@ function renderList() {
   }
 
   const sorted = [...state.items].sort((a, b) => b.elo - a.elo);
+  const visible = state.showCompleted ? sorted : sorted.filter(it => !it.completed);
   container.innerHTML = `
     <div class="items-list">
-      ${sorted.map((it, idx) => `
+      ${visible.map((it, idx) => `
         <div class="item-row ${idx === 0 && !it.completed ? 'rank-1' : ''} ${it.completed ? 'completed' : ''}">
           <button class="item-check ${it.completed ? 'checked' : ''}" data-id="${it.id}"
                   title="${it.completed ? 'Réactiver l\'item' : 'Marquer comme terminé'}"
