@@ -1058,9 +1058,11 @@ function renderList() {
   const stats = document.getElementById('list-stats');
   const totalBattles = state.history.length;
   const completedCount = state.items.filter(i => i.completed).length;
+  const todoCount = state.items.length - completedCount;
   const statsParts = [
     `${state.items.length} item${state.items.length > 1 ? 's' : ''}`
   ];
+  statsParts.push(`${todoCount} à faire`);
   if (completedCount > 0) statsParts.push(`${completedCount} terminé${completedCount > 1 ? 's' : ''}`);
   statsParts.push(`${totalBattles} battle${totalBattles > 1 ? 's' : ''}`);
   stats.textContent = statsParts.join(' · ');
