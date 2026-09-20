@@ -1233,13 +1233,25 @@ function recordChoice(winnerId, loserId) {
 // ============================================================
 // Téléchargement JSON
 // ============================================================
+function slugifyKebabCase(str) {
+  return String(str)
+    .trim()
+    .replace(/[\\/:*?"<>|]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
 function downloadJson() {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   const date = new Date().toISOString().slice(0, 10);
+  const titleSlug = slugifyKebabCase(state.boardTitle || '');
+  const filename = titleSlug
+    ? `${date}_priorboard_${titleSlug}.json`
+    : `${date}_priorboard.json`;
   a.href = url;
-  a.download = `priorboard-${date}.json`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
