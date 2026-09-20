@@ -409,7 +409,7 @@
 
   .item-row {
     display: grid;
-    grid-template-columns: 32px 44px 1fr 80px 90px 40px 40px;
+    grid-template-columns: 32px 44px 1fr 56px 90px 40px 40px;
     align-items: center;
     gap: 14px;
     padding: 16px 22px;
@@ -437,6 +437,47 @@
     letter-spacing: -0.01em;
     overflow-wrap: break-word;
     min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .item-name-text { min-width: 0; overflow-wrap: break-word; }
+  .item-edit {
+    background: none;
+    border: none;
+    color: var(--ink-faint);
+    cursor: pointer;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    transition: all var(--t-fast);
+    opacity: 0;
+  }
+  .item-row:hover .item-edit { opacity: 1; }
+  .item-edit:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .item-name-input {
+    font-family: var(--font-sans);
+    font-size: 15.5px;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius);
+    padding: 4px 8px;
+    width: 100%;
+    min-width: 0;
+    background: var(--bg-elevated);
+  }
+  .item-name-input:focus {
+    outline: none;
+    border-color: var(--accent);
   }
   .item-elo {
     font-family: var(--font-mono);
@@ -1039,6 +1080,17 @@ function toggleDisabled(id) {
   saveState();
 }
 
+function renameItem(id, newName) {
+  const name = newName.trim();
+  if (!name) return false;
+  const item = state.items.find(i => i.id === id);
+  if (!item) return false;
+  item.name = name;
+  saveState();
+  return true;
+}
+
+
 // ============================================================
 // Sélection des items pour la battle
 // ------------------------------------------------------------
@@ -1206,7 +1258,15 @@ function renderList() {
             </svg>
           </button>
           <div class="item-rank">${String(idx + 1).padStart(2, '0')}</div>
-          <div class="item-name">${escapeHtml(it.name)}</div>
+          <div class="item-name" data-id="${it.id}">
+            <span class="item-name-text">${escapeHtml(it.name)}</span>
+            <button class="item-edit" data-id="${it.id}" title="Modifier le titre" aria-label="Modifier le titre">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </button>
+          </div>
           <div class="item-elo">${Math.round(it.elo)}</div>
           <div class="item-battles">${it.battles} battle${it.battles > 1 ? 's' : ''}</div>
           <button class="item-disable ${it.disabled ? 'active' : ''}" data-id="${it.id}"
@@ -1250,6 +1310,30 @@ function renderList() {
         deleteItem(id);
         renderList();
       }
+    });
+  });
+
+  container.querySelectorAll('.item-edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.id;
+      const item = state.items.find(i => i.id === id);
+      if (!item) return;
+      const nameEl = container.querySelector(`.item-name[data-id="${id}"]`);
+      if (!nameEl) return;
+      nameEl.innerHTML = `<input type="text" class="item-name-input" value="${escapeHtml(item.name)}">`;
+      const input = nameEl.querySelector('.item-name-input');
+      input.focus();
+      input.select();
+
+      const commit = () => {
+        renameItem(id, input.value);
+        renderList();
+      };
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); commit(); }
+        else if (e.key === 'Escape') { e.preventDefault(); renderList(); }
+      });
+      input.addEventListener('blur', commit);
     });
   });
 }

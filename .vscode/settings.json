@@ -7,6 +7,7 @@
         "/^cd /workspaces/PriorBoard && php -S 0\\.0\\.0\\.0:8000$/": {
             "approve": true,
             "matchCommandLine": true
-        }
+        },
+        "pgrep": true
     }
 }
