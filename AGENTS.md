@@ -1,1 +1,2 @@
 - A chaque mise à jour du code il faut écrire dans la conversation un commentaire de commit court qui décrit la mise à jour.
+- A chaque mise à jour du code, vérifie si cela correspond à une ligne de #TODO dans le fichier TODO.md. Si la modification du code réalise la ligne, alors déplace la ligne dans la section #DONE du fichier TODO.md et raye-la
