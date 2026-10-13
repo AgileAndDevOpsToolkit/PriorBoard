@@ -1,2 +1,3 @@
 - A chaque mise à jour du code il faut écrire dans la conversation un commentaire de commit court qui décrit la mise à jour.
 - A chaque mise à jour du code, vérifie si cela correspond à une ligne de #TODO dans le fichier TODO.md. Si la modification du code réalise la ligne, alors déplace la ligne dans la section #DONE du fichier TODO.md et raye-la
+- A chaque nouvelle séance de codage, ajoute un fichier dans doc/ai-prompts. Préfixe-le par le numéro suivant en fonction des fichiers déjà existants. Mets un nom pertinent par rapport à la feature développée et écris dans le fichier le texte du prompt que j'ai écrit pour te faire développer la feature. Le prompt doit être sous fomre de bloc de code

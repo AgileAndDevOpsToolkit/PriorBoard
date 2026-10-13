@@ -4,9 +4,9 @@
 
 # A REFLECHIR
 - faire en sorte que dans le localstorage le titre serve d'id et qu'on puisse passer d'un priorboard à un autre ?
-- Vider tout le tableau ? informer de sauvegarder d'abord via le téléchargement de la liste, sinon le tableau sera perdu -> Est-ce vraiment une feature utile ? Pour commencer à créer un nouveau tableau peut être ? A réfléchir
 
 # DONE
+~~- Vider tout le tableau (avec pop-up de confirmation conseillant de sauvegarder avant)~~
 ~~- Pouvoir Masquer les items terminés~~
 ~~- Pouvoir désactiver un item~~
 ~~- Pouvoir éditer un item~~
