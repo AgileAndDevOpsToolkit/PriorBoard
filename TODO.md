@@ -1,14 +1,15 @@
 # TODO
 - Pouvoir ajouter des tags aux items : colonne avec bouton +. Quand on clique dessus on a un menu déroulant qui apparait avec les tags disponibles et "ajouter un tag". Comme tag on peut mettre une seule lettre ou une seule emoticon
 - Chargement de fichier par glisser/déposer
+- Dans l'écran "battle", ajouter sur les cartes les boutons pour désactiver, supprimer une carte ou modifier un titre
 
 # A REFLECHIR
 - faire en sorte que dans le localstorage le titre serve d'id et qu'on puisse passer d'un priorboard à un autre ?
 
 # DONE
-~~- Vider tout le tableau (avec pop-up de confirmation conseillant de sauvegarder avant)~~
-~~- Pouvoir Masquer les items terminés~~
-~~- Pouvoir désactiver un item~~
-~~- Pouvoir éditer un item~~
-~~- Pouvoir mettre un titre au priorboard (et persister)~~
-~~- Sauvegarde : nommage du fichier : mettre d'abord la date, ensuite priorboard, ensuite le titre en kebabcase~~
+-  ~~Vider tout le tableau (avec pop-up de confirmation conseillant de sauvegarder avant)~~
+-  ~~Pouvoir Masquer les items terminés~~
+-  ~~Pouvoir désactiver un item~~
+-  ~~Pouvoir éditer un item~~
+-  ~~Pouvoir mettre un titre au priorboard (et persister)~~
+-  ~~Sauvegarde : nommage du fichier : mettre d'abord la date, ensuite priorboard, ensuite le titre en kebabcase~~
